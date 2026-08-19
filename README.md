@@ -27,7 +27,6 @@ pyml/
 |       |-- gradient_boost.py
 |       |-- linear_regression.py
 |       |-- svm.py
-|
 |-- unsupervised/
 |   |-- base/
 |   |   |-- clustering.py
