@@ -1,8 +1,8 @@
 import numpy as np
 from typing import Literal
 
-from .base import LinearModel
-from .base import lasso, ridge, elastic_net
+from ..base.linear import LinearModel
+from ..base.linear import lasso, ridge, elastic_net
 from ...utils.math.activations import linear
 from ...utils.metrics.regression import mse_score, mae_score
 

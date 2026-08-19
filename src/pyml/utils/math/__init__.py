@@ -1,4 +1,4 @@
-from distance import (
+from pyml.utils.math.distance import (
     euclidean_distance,
 )
 from .gaussian import (

@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyml-core"
+version = "0.1.0"
+description = "Machine learning algorithms implemented from scratch."
+requires-python = ">=3.11"
+dependencies = [
+    "numpy",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pandas",
+    "matplotlib",
+    "seaborn",
+    "ipykernel",
+    "jupyter",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

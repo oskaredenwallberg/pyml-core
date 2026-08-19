@@ -1,6 +1,17 @@
 # custom
-.venv/
 .DS_Store
+.depr/
+.venv/
+data/
+*.png
+*.pdf
+*.jpg
+*.jpeg
+*.svg
+*.csv
+*.parquet
+*.ipynb
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
