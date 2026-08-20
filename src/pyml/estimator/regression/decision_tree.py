@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from typing import Literal
 
-from ..base.decision_tree import (
+from ..base import (
     BinaryTreeNodeMeta,
     BinaryTreeNode,
     BinaryTree,

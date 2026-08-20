@@ -3,8 +3,6 @@ from abc import ABC, abstractmethod
 
 from ...utils.math.distance import euclidean_distance
 
-# --------------------- K NEAREST NEIGHBORS BASE CLASSES ---------------------
-# KNNModel      (ABC)
 
 class KNNModel(ABC):
     def __init__(
@@ -18,35 +16,10 @@ class KNNModel(ABC):
         self.y_train = None
         
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
-        """
-        KNN is parameters-less. 
-        No formal training other than storing data for future reference during 
-        majority voting and mean calculations. 
-
-        Parameters
-        ----------
-        X : ndarray
-            Array of input feature data. 
-        y : ndarray
-            Array of input target data.
-        """
         self.x_train = X
         self.y_train = y
 
     def predict(self, X: np.ndarray) -> np.ndarray:
-        """
-        ...
-        
-        Parameters
-        ---------
-        X : ndarray
-            Array of input data to be evaluated.
-
-        Returns
-        -------
-        ndarray
-            Array of target predictions.
-        """ 
         m = X.shape[0]  # num inputted datapoints
         predictions = np.zeros(m)
 
@@ -63,13 +36,39 @@ class KNNModel(ABC):
 
     @property
     def is_fitted(self) -> bool:
-        """
-        ...
-        """
         return self.x_train is not None and self.y_train is not None
     
 
 
+
+
+# """
+# KNN is parameters-less. 
+# No formal training other than storing data for future reference during 
+# majority voting and mean calculations. 
+
+# Parameters
+# ----------
+# X : ndarray
+#     Array of input feature data. 
+# y : ndarray
+#     Array of input target data.
+# """
+
+
+# """
+# ...
+
+# Parameters
+# ---------
+# X : ndarray
+#     Array of input data to be evaluated.
+
+# Returns
+# -------
+# ndarray
+#     Array of target predictions.
+# """ 
 
     # def k_nearest(self, x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     #     """

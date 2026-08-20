@@ -13,12 +13,12 @@ pyml/
 |   |   |-- svm.py
 |   |   |-- knn.py
 |   |-- classification/
-|   |   |-- decision_tree.py
-|   |   |-- random_forest.py
 |   |   |-- adabost.py
-|   |   |-- gradient_boost.py
+|   |   |-- decision_tree.py
 |   |   |-- knn.py
 |   |   |-- logistic_regression.py
+|   |   |-- naive_bayes.py
+|   |   |-- random_forest.py
 |   |   |-- svm.py
 |   |-- regression/
 |       |-- decision_tree.py
