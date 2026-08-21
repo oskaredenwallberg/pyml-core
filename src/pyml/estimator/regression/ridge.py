@@ -24,19 +24,21 @@ class RidgeGD(Estimator, Linear):
         x = np.c_[np.ones(N), x]
 
         params = np.zeros(F+1)
-        losses, params = self.optimizer.run(self._objective, x, y, params)
+        losses, params = self.optimizer.run(self, x, y, params)
 
         self.losses = losses
         self.params = params
-    
-    def _objective(self, x: NDArray, y: NDArray, theta: NDArray):
+
+    def gradient(self, x: NDArray, y: NDArray, theta: NDArray) -> NDArray:
         N, F = x.shape
-        penalty = theta.copy()
-        penalty[0] = 0.0
-        error = y - x @ theta
-        loss = np.mean(error ** 2) + self.lamda * np.sum(penalty ** 2)
-        grad = -2/N * x.T @ error + self.lamda * 2 * penalty
-        return loss, grad
+        grad = -2/N * x.T @ (y - x @ theta)
+        grad[1:] += 2 * self.lamda * theta[1:]
+        return grad
+
+    def loss(self, x: NDArray, y: NDArray, theta: NDArray) -> NDArray:
+        loss = np.mean((y - x @ theta) ** 2)
+        loss += self.lamda * np.sum(theta[1:] ** 2)
+        return loss
 
 
 class RidgeQR(Estimator, Linear):

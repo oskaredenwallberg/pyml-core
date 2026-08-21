@@ -1,10 +1,11 @@
-from typing import Callable
 from numpy.typing import NDArray
+
+from pyml.estimator.base import Estimator
 
 class Optimizer:
     def run(
             self,
-            objective: Callable,
+            estimator: Estimator,
             x: NDArray,
             y: NDArray,
             params: NDArray

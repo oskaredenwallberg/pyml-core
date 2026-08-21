@@ -1,20 +1,20 @@
 import numpy as np
-from typing import Callable
 from numpy.typing import NDArray
 
 from pyml.optimizer.base import Optimizer
+from pyml.estimator.base import Estimator
 
 # TODO add to GradientDescent
 # patience = 5,
 # train_val_split = 0.2,
 # verbose = True
 
-class GradientDescent:
+class GradientDescent(Optimizer):
     def __init__(
             self,
             batch_size: int | None,
             iterations: int,
-            learning_rate: int,
+            learning_rate: float,
         ):
         self.batch_size = batch_size
         self.iterations = iterations
@@ -22,7 +22,7 @@ class GradientDescent:
     
     def run(
             self,
-            objective: Callable,
+            estimator: Estimator,
             x: NDArray, 
             y: NDArray, 
             params: NDArray,
@@ -30,7 +30,7 @@ class GradientDescent:
         
         losses = np.full((self.iterations,), fill_value=np.nan)
         N, F = x.shape
-        x_batch, y_batch = x.copy(), y.copy()
+        x_batch, y_batch = x, y
         index = np.arange(N)
 
         for i in range(self.iterations):
@@ -39,9 +39,10 @@ class GradientDescent:
                 index_batch = index[:self.batch_size]
                 x_batch = x[index_batch]
                 y_batch = y[index_batch]
-            loss, grad = objective(x_batch, y_batch, params)
-            losses[i] = loss
+            grad = estimator.gradient(x_batch, y_batch, params)
             params -= self.learning_rate * grad
+            loss = estimator.loss(x_batch, y_batch, params)
+            losses[i] = loss
 
         return losses, params
 

@@ -1,2 +1,3 @@
-from pyml.optimizer.descent import GradientDescent
-
+from pyml.optimizer.gradient_descent import GradientDescent
+from pyml.optimizer.conjugate_descent import ConjugateDescent
+from pyml.optimizer.coordinate_descent import CoordinateDescent
