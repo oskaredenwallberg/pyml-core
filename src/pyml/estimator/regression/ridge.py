@@ -2,7 +2,7 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
 from pyml.estimator.base import Estimator
-from pyml.estimator.base.linear import Linear
+from pyml.estimator.base import Linear
 from pyml.optimizer import GradientDescent
 
 

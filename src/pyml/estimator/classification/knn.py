@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..base.knn import KNNModel
+from ..base.neighbor import KNNModel
 
 # --------------------- K NEAREST NEIGHBORS CLASSIFIER ---------------------
 # - KNNClassifier       (KNNModel)

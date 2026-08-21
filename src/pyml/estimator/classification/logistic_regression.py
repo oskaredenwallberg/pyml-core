@@ -6,54 +6,6 @@ from ..base.linear import lasso, ridge, elastic_net
 from ...utils.math.activations import sigmoid
 from ...utils.metrics.classification import bce_score
 
-# --------------------- LOGISTIC REGRESSION MODELS ---------------------
-# - LogisticRegression      (LinearModel)
-# - LogisticLASSO           (LinearModel)
-# - LogisticRidge           (LinearModel)
-# - LogisticElasticNet      (LinearModel)
-
-class LogisticRegression(LinearModel):
-    def __init__(
-            self, 
-            learning_rate = 0.01, 
-            epochs = 200, 
-            batch_size = 32,
-            keep_rest = False,
-            training_method = 'mbsgd',
-            patience = 5,
-            train_val_split = 0.2,
-            verbose = True):
-        super().__init__(learning_rate, epochs, batch_size, keep_rest, training_method, patience, train_val_split, verbose)
-        self._activation = sigmoid
-        self.n_features = None
-
-    def compute_loss(self, y_true, y_pred):
-        """
-        Includes no penalty in normal LogisticRegression
-        """
-        loss = bce_score(y_true, y_pred)  # binary cross entropy score
-        return loss
-
-    def gradient_update(self, x, y_true, y_pred):
-        """
-        Includes no regularisation penalty termin in normal LogisticRegression. 
-
-        >>> loss(X, y) = -1/m * sum( y * log(h(X)) + (1-y) * log(1-h(X)) )  # nll
-        >>> where, h(x) = 1/(1+e^-(wx+b))
-        >>> # Logistic Regression partial differentials
-        >>> d/dw loss(w, b) = 1/m sum( x * [h(x) - y] )
-        >>> d/db loss(w, b) = 1/m sum( h(x) - y )
-        """ # NOTE see calculation at bottom of file
-        error = y_pred - y_true  # h(x) - y 
-        m = x.shape[0]
-
-        gradient_w = x.T @ error / m
-        gradient_b = error.mean()
-
-        self.w -= self.learning_rate * gradient_w
-        self.b -= self.learning_rate * gradient_b
-
-
 
 class LogisiticLASSO(LinearModel):
     def __init__(
@@ -96,7 +48,6 @@ class LogisiticLASSO(LinearModel):
         self.w -= self.learning_rate * gradient_w
         self.b -= self.learning_rate * gradient_b
 
-        
 
 class LogisticRidge(LinearModel):
     def __init__(
@@ -141,51 +92,93 @@ class LogisticRidge(LinearModel):
 
 
 
-class LogisticElasticNet(LinearModel):
-    def __init__(
-            self, 
-            learning_rate = 0.01,
-            l1_ratio : float = 0.5, 
-            alpha : float = 1,  # regularisation strength
-            epochs = 200,
-            batch_size = 32,
-            keep_rest = False,
-            training_method = 'mbsgd',
-            patience = 5,
-            train_val_split = 0.2,
-            verbose = True):
-        super().__init__(learning_rate, epochs, batch_size, keep_rest, training_method, patience, train_val_split, verbose)
-        self._activation = sigmoid
-        self.alpha = alpha
-        self.l1_ratio = l1_ratio
-        self.n_features = None   
+# class LogisticRegression(LinearModel):
+#     def __init__(
+#             self, 
+#             learning_rate = 0.01, 
+#             epochs = 200, 
+#             batch_size = 32,
+#             keep_rest = False,
+#             training_method = 'mbsgd',
+#             patience = 5,
+#             train_val_split = 0.2,
+#             verbose = True):
+#         super().__init__(learning_rate, epochs, batch_size, keep_rest, training_method, patience, train_val_split, verbose)
+#         self._activation = sigmoid
+#         self.n_features = None
 
-    def compute_loss(self, y_true, y_pred) -> float:
-        """
-        ...
-        """
-        penalty = elastic_net(self.w)  # weighted sum of l1 norm and l2 norm
-        loss = bce_score(y_true, y_pred) + self.alpha * penalty
-        return loss
+#     def compute_loss(self, y_true, y_pred):
+#         """
+#         Includes no penalty in normal LogisticRegression
+#         """
+#         loss = bce_score(y_true, y_pred)  # binary cross entropy score
+#         return loss
+
+#     def gradient_update(self, x, y_true, y_pred):
+#         """
+#         Includes no regularisation penalty termin in normal LogisticRegression. 
+
+#         >>> loss(X, y) = -1/m * sum( y * log(h(X)) + (1-y) * log(1-h(X)) )  # nll
+#         >>> where, h(x) = 1/(1+e^-(wx+b))
+#         >>> # Logistic Regression partial differentials
+#         >>> d/dw loss(w, b) = 1/m sum( x * [h(x) - y] )
+#         >>> d/db loss(w, b) = 1/m sum( h(x) - y )
+#         """ # NOTE see calculation at bottom of file
+#         error = y_pred - y_true  # h(x) - y 
+#         m = x.shape[0]
+
+#         gradient_w = x.T @ error / m
+#         gradient_b = error.mean()
+
+#         self.w -= self.learning_rate * gradient_w
+#         self.b -= self.learning_rate * gradient_b
+
+
+# class LogisticElasticNet(LinearModel):
+#     def __init__(
+#             self, 
+#             learning_rate = 0.01,
+#             l1_ratio : float = 0.5, 
+#             alpha : float = 1,  # regularisation strength
+#             epochs = 200,
+#             batch_size = 32,
+#             keep_rest = False,
+#             training_method = 'mbsgd',
+#             patience = 5,
+#             train_val_split = 0.2,
+#             verbose = True):
+#         super().__init__(learning_rate, epochs, batch_size, keep_rest, training_method, patience, train_val_split, verbose)
+#         self._activation = sigmoid
+#         self.alpha = alpha
+#         self.l1_ratio = l1_ratio
+#         self.n_features = None   
+
+#     def compute_loss(self, y_true, y_pred) -> float:
+#         """
+#         ...
+#         """
+#         penalty = elastic_net(self.w)  # weighted sum of l1 norm and l2 norm
+#         loss = bce_score(y_true, y_pred) + self.alpha * penalty
+#         return loss
     
-    def gradient_update(self, x, y_true, y_pred) -> None:
-        """
-        >>> penalty(w) = l1_ratio * sum(|w|) + (1 - l1_ratio) * sum(w^2)
-        >>> loss(X, y) = -1/m * sum( y * log(h) + (1-y) * log(1-h) ) + lamda * sum(w^2)
-        >>> # Ridge partial differentials
-        >>> d/dw penalty(w) = l1_ratio * sign(w) + (1 - l1_ratio) * 2 * w
-        >>> d/dw loss(w, b) = 1/m sum( x * [h(x) - y] ) + alpha * d/dw penalty(w)
-        >>> d/db loss(w, b) = 1/m sum( h(x) - y )
-        """
-        m = x.shape[0]
-        errors = y_pred - y_true
+#     def gradient_update(self, x, y_true, y_pred) -> None:
+#         """
+#         >>> penalty(w) = l1_ratio * sum(|w|) + (1 - l1_ratio) * sum(w^2)
+#         >>> loss(X, y) = -1/m * sum( y * log(h) + (1-y) * log(1-h) ) + lamda * sum(w^2)
+#         >>> # Ridge partial differentials
+#         >>> d/dw penalty(w) = l1_ratio * sign(w) + (1 - l1_ratio) * 2 * w
+#         >>> d/dw loss(w, b) = 1/m sum( x * [h(x) - y] ) + alpha * d/dw penalty(w)
+#         >>> d/db loss(w, b) = 1/m sum( h(x) - y )
+#         """
+#         m = x.shape[0]
+#         errors = y_pred - y_true
 
-        gradient_penalty = self.l1_ratio * np.sign(self.w) + (1 - self.l1_ratio) * 2 * self.w
-        gradient_w = x.T @ errors / m + self.alpha * gradient_penalty
-        gradient_b = errors.mean()
+#         gradient_penalty = self.l1_ratio * np.sign(self.w) + (1 - self.l1_ratio) * 2 * self.w
+#         gradient_w = x.T @ errors / m + self.alpha * gradient_penalty
+#         gradient_b = errors.mean()
 
-        self.w -= self.learning_rate * gradient_w
-        self.b -= self.learning_rate * gradient_b
+#         self.w -= self.learning_rate * gradient_w
+#         self.b -= self.learning_rate * gradient_b
 
 
 
