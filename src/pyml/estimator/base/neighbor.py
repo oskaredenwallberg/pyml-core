@@ -1,89 +1,42 @@
 import numpy as np
-from abc import ABC, abstractmethod
+from numpy.typing import ArrayLike, NDArray
 
-from ...utils.math.distance import euclidean_distance
+from pyml.utils.math.distance import euclidean_distance
 
 
-class KNNModel(ABC):
-    def __init__(
-            self,
-            k : int = 5,  # any odd value
-        ):
-        super().__init__()
-        # Parameters
-        self.k = k
-        self.x_train = None
-        self.y_train = None
+class Neighbor:
+    k: int
+    chunksize: int
+
+    def fit(self, x: ArrayLike, y: ArrayLike):
+        self.x = np.asarray(x)
+        self.y = np.asarray(y)
+
+    def predict(self, x: ArrayLike) -> NDArray:
+        raise NotImplementedError
+
+    def prd(self, x: ArrayLike) -> NDArray:
+        return self.predict(x)
+
+    def neighbors(self, x: ArrayLike) -> tuple[NDArray, NDArray]:
+        M, F = x.shape
+
+        b = self.x
+        bb = np.sum(b**2, axis=1)[None,:]
+        index = np.empty((M, self.k), dtype=int)
+
+        rows = np.arange(self.chunksize)[:, None]
+        distance = np.empty((M, self.k), dtype=float)
         
-    def fit(self, X: np.ndarray, y: np.ndarray) -> None:
-        self.x_train = X
-        self.y_train = y
+        for i0 in range(0, M, self.chunksize):
+            i1 = i0 + min(M-i0, self.chunksize)
+            a = x[i0:i1]
+            aa = np.sum(a**2, axis=1)[:,None]
+            ab = a @ b.T
+            norm2sq = aa + bb - 2 * ab
+            argpart = np.argpartition(norm2sq, self.k-1, axis=1)[:, :self.k]
 
-    def predict(self, X: np.ndarray) -> np.ndarray:
-        m = X.shape[0]  # num inputted datapoints
-        predictions = np.zeros(m)
+            index[i0:i1] = argpart
+            distance[i0:i1] = norm2sq[rows[:i1-i0], argpart] ** 0.5
 
-        for i in range(m):
-            x = X[i]
-            distances = euclidean_distance(x, self.x_train, axis=1)
-            predictions[i] = self.evaluate(distances)
-
-        return predictions
-
-    @abstractmethod
-    def evaluate(self, distances: np.ndarray) -> int|float:
-        pass
-
-    @property
-    def is_fitted(self) -> bool:
-        return self.x_train is not None and self.y_train is not None
-    
-
-
-
-
-# """
-# KNN is parameters-less. 
-# No formal training other than storing data for future reference during 
-# majority voting and mean calculations. 
-
-# Parameters
-# ----------
-# X : ndarray
-#     Array of input feature data. 
-# y : ndarray
-#     Array of input target data.
-# """
-
-
-# """
-# ...
-
-# Parameters
-# ---------
-# X : ndarray
-#     Array of input data to be evaluated.
-
-# Returns
-# -------
-# ndarray
-#     Array of target predictions.
-# """ 
-
-    # def k_nearest(self, x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    #     """
-    #     Find the indicies of the k training datapoints nearest to
-    #     the inputted datapoint x. Nearest is defined by euclidean
-    #     distance.
-
-    #     Parameters
-    #     ----------
-    #     x : ndarray
-    #         An array containing the feature values of a single datapoint.
-
-    #     Returns
-    #     -------
-    #     ndarray
-    #         An array of indicies of the k training datapoints nearest x.  
-    #     """
-        
+        return index, distance
