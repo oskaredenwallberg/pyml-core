@@ -1,6 +1,5 @@
 import numpy as np
-from numpy.typing import NDArray
-
+from numpy.typing import ArrayLike, NDArray
 
 class Node:
     def __init__(self,
@@ -26,8 +25,80 @@ class Node:
 class Tree:
     root: Node | None
 
-    def predict(self, x: NDArray) -> NDArray:
+    def fit(self, x: ArrayLike, y: ArrayLike):
+        x = np.asarray(x)
+        y = np.asarray(y)
+        N, F = x.shape
+
+        root = Node(0, np.arange(N))
+        queue = [root]
+
+        while queue:
+            node = queue.pop(0)
+            j, t = self.search_split(x, y, node)
+            
+            if j is None or t is None:
+                node.target = self.prediction(y, node)
+            else:
+                node.j = j
+                node.t = t
+                mask = x[node.index, j] < t
+                node.left  = Node(node.depth+1, node.index[mask])
+                node.right = Node(node.depth+1, node.index[~mask])
+                queue.append(node.left)
+                queue.append(node.right)
+
+        self.root = root
+
+    def search_split(self, x: NDArray, y: NDArray, node: Node):
+        N, F = x.shape
+        best = 0.0  # min_score later on
+        t_star = None
+        j_star = None
+
+        if self.skip(node) == True:
+            return j_star, t_star
+
+        yi = y[node.index]
+        xi = x[node.index]
+
+        for j in range(F):
+            xij = xi[:, j]
+            t, score = self.threshold(xij, yi)
+            if score > best:
+                best = score
+                j_star = j
+                t_star = t
+
+        return j_star, t_star
+
+    def skip(self, node: Node) -> bool:
         raise NotImplementedError
+
+    def threshold(self, xij: NDArray, yi: NDArray):
+        raise NotImplementedError
+
+    def prediction(self, y: NDArray, node: Node) -> float:
+        raise NotImplementedError
+
+    def predict(self, x: ArrayLike) -> NDArray:
+        assert self.root is not None
+        x = np.asarray(x)
+        N, F = x.shape
+        predictions = np.full((N,), fill_value=np.nan)
+        queue = [(self.root, np.arange(N))]
+        while queue:
+            node, index = queue.pop(0)
+
+            if node.target is not None:
+                predictions[index] = node.target
+                continue
+
+            mask = x[index, node.j] < node.t
+            queue.append((node.left, index[mask]))
+            queue.append((node.right, index[~mask]))
+            
+        return predictions
 
     def prd(self, x: NDArray) -> NDArray:
         return self.predict(x)
@@ -66,20 +137,10 @@ class Tree:
 
 
 
-# @property
-# def nodes(self) -> list[Node]:
-#     return [node for node in self.ravel_dfs() if not node.is_leaf]
 
-# @property
-# def leaves(self) -> list[Node]:
-#     return [node for node in self.ravel_dfs() if node.is_leaf]
 
 # def reduced_error_pruning(self, X_val:np.ndarray, y_val:np.ndarray) -> None:
 #     raise NotImplementedError
-
-# def _search_split(self, x:np.ndarray, y:np.ndarray) -> tuple[int, int|float]:
-#     raise NotImplementedError
-
 
 
 
