@@ -38,7 +38,7 @@ class Tree:
             j, t = self.search_split(x, y, node)
             
             if j is None or t is None:
-                node.target = self.prediction(y, node)
+                node.target = self.leaf_target(y[node.index])
             else:
                 node.j = j
                 node.t = t
@@ -78,7 +78,7 @@ class Tree:
     def threshold(self, xij: NDArray, yi: NDArray):
         raise NotImplementedError
 
-    def prediction(self, y: NDArray, node: Node) -> float:
+    def leaf_target(self, yi: NDArray) -> float:
         raise NotImplementedError
 
     def predict(self, x: ArrayLike) -> NDArray:

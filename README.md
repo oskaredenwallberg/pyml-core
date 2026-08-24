@@ -6,27 +6,27 @@
 ```
 pyml/
 |-- base/
-|   |-- tree.py
-|   |-- linear.py
+|   |-- tree.py                 done
+|   |-- linear.py               done
+|   |-- neighbor.py             done
+|   |-- svm.py                  next up
 |   |-- ensemble.py
-|   |-- svm.py
-|   |-- knn.py
 |   |-- clustering.py
 |   |-- decomposition.py
 |   |-- outlier.py
 |   |-- dimensionality.py
 |   classification/
-|   |-- decision_tree.py
-|   |-- knn.py
-|   |-- logistic_regression.py
+|   |-- decision_tree.py        ...
+|   |-- knn.py                  done
+|   |-- logistic_regression.py  rework
 |   |-- naive_bayes.py
 |   |-- random_forest.py
 |   |-- svm.py
 |   regression/
-|   |-- decision_tree.py
-|   |-- random_forest.py
-|   |-- lasso.py
-|   |-- ridge.py
+|   |-- decision_tree.py        done
+|   |-- random_forest.py        done
+|   |-- lasso.py                done
+|   |-- ridge.py                done
 |   |-- svm.py
 |   clustering/
 |   |-- kmeans.py

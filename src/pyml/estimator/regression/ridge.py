@@ -40,6 +40,9 @@ class RidgeGD(Estimator, Linear):
         loss += self.lamda * np.sum(theta[1:] ** 2)
         return loss
 
+    def predict(self, x: ArrayLike) -> NDArray:
+        return self.linear(x)
+
 
 class RidgeQR(Estimator, Linear):
     def __init__(
@@ -63,6 +66,9 @@ class RidgeQR(Estimator, Linear):
         params = np.linalg.solve(r, q.T @ y_stacked)
 
         self.params = params
+
+    def predict(self, x: ArrayLike) -> NDArray:
+        return self.linear(x)
 
 
 class RidgeCholesky(Estimator, Linear):
@@ -88,3 +94,6 @@ class RidgeCholesky(Estimator, Linear):
         params = np.linalg.solve(l.T, z)
 
         self.params = params
+
+    def predict(self, x: ArrayLike) -> NDArray:
+        return self.linear(x)

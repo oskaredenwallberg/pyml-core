@@ -50,8 +50,8 @@ class DecisionTreeVR(Estimator, Tree):
         t = (x_sorted[k[argmax]] + x_sorted[k[argmax]+1]) / 2
         return t, score
 
-    def prediction(self, y: NDArray, node: Node):
-        return y[node.index].mean()
+    def leaf_target(self, yi: NDArray):
+        return yi.mean()
 
 
 

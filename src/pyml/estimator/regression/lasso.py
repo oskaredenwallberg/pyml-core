@@ -45,6 +45,9 @@ class LassoCD(Estimator, Linear):
         loss += self.lamda * np.sum(np.abs(theta[1:]))
         return loss
 
+    def predict(self, x: ArrayLike) -> NDArray:
+        return self.linear(x)
+
 
 def soft_threshold(a, b):
     if a > b:
