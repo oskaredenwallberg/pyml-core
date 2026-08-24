@@ -1,16 +1,13 @@
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from pyml.utils.math.distance import euclidean_distance
-
 
 class Neighbor:
     k: int
     chunksize: int
 
     def fit(self, x: ArrayLike, y: ArrayLike):
-        self.x = np.asarray(x)
-        self.y = np.asarray(y)
+        raise NotImplementedError
 
     def predict(self, x: ArrayLike) -> NDArray:
         raise NotImplementedError
