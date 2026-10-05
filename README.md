@@ -9,14 +9,14 @@ pyml/
 |   |-- tree.py                 done
 |   |-- linear.py               done
 |   |-- neighbor.py             done
-|   |-- svm.py                  next up
+|   |-- svm.py                  ...
 |   |-- ensemble.py
 |   |-- clustering.py
 |   |-- decomposition.py
 |   |-- outlier.py
 |   |-- dimensionality.py
 |   classification/
-|   |-- decision_tree.py        ...
+|   |-- decision_tree.py        next up
 |   |-- knn.py                  done
 |   |-- logistic_regression.py  rework
 |   |-- naive_bayes.py

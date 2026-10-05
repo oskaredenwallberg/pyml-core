@@ -3,8 +3,8 @@ from typing import Literal
 
 from ..base.linear import LinearModel
 from ..base.linear import lasso, ridge, elastic_net
-from ...utils.math.activations import sigmoid
-from ...utils.metrics.classification import bce_score
+from ..utils.math.activations import sigmoid
+from ..utils.metrics.classification import bce_score
 
 
 class LogisiticLASSO(LinearModel):

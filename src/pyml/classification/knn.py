@@ -1,8 +1,8 @@
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from pyml.estimator.base import Estimator
-from pyml.estimator.base import Neighbor
+from pyml.base import Estimator
+from pyml.base import Neighbor
 
 from pyml.config.constants import EPS
 

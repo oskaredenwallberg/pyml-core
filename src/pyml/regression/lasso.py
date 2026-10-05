@@ -1,19 +1,18 @@
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from pyml.estimator.base import Estimator
-from pyml.estimator.base import Linear
-from pyml.optimizer import CoordinateDescent
+from pyml.base import Estimator, Optimizer
+from pyml.base import Linear
 
 
 class LassoCD(Estimator, Linear):
     def __init__(
             self,
             lamda: float,
-            optimizer: CoordinateDescent
+            iterations: int = 100,
             ):
         self.lamda = lamda
-        self.optimizer = optimizer
+        self.optimizer = CoordinateDescent(iterations)
         self.params: NDArray = None
         self.losses: NDArray = None
 
@@ -48,6 +47,9 @@ class LassoCD(Estimator, Linear):
     def predict(self, x: ArrayLike) -> NDArray:
         return self.linear(x)
 
+# L(theta) = 1/N * l2(y - X @ theta)^2 + lamda * l1(theta)
+# L(theta) = 1/N * Sum( (y - X @ theta)^2 ) + lamda * Sum( abs(theta[1:]) )
+
 
 def soft_threshold(a, b):
     if a > b:
@@ -57,7 +59,28 @@ def soft_threshold(a, b):
     return 0.0
 
 
+class CoordinateDescent(Optimizer):
+    def __init__(
+            self,
+            iterations: int,
+        ):
+        self.iterations = iterations
 
+    def run(
+            self,
+            estimator: LassoCD,
+            x: NDArray,
+            y: NDArray,
+            params: NDArray,
+        ) -> tuple[NDArray, NDArray]:
 
-# L(theta) = 1/N * l2(y - X @ theta)^2 + lamda * l1(theta)
-# L(theta) = 1/N * Sum( (y - X @ theta)^2 ) + lamda * Sum( abs(theta[1:]) )
+        N, F = x.shape
+        losses = np.full((self.iterations,), fill_value=np.nan)
+
+        for i in range(self.iterations):
+            for j in range(F):
+                params[j] = estimator.coordinate(x, y, params, j)
+            loss = estimator.loss(x, y, params)
+            losses[i] = loss
+
+        return losses, params

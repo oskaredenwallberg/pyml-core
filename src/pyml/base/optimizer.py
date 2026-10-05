@@ -1,4 +1,18 @@
 import numpy as np
+from numpy.typing import NDArray
+
+from pyml.base import Estimator
+
+class Optimizer:
+    def run(
+            self,
+            estimator: Estimator,
+            x: NDArray,
+            y: NDArray,
+            params: NDArray
+        ) -> tuple[NDArray, NDArray]:
+        raise NotImplementedError
+
 
 class EarlyStopper:
     def __init__(self, patience: int = 5):

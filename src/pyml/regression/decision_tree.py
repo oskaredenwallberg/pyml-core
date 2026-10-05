@@ -1,11 +1,11 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from pyml.estimator.base import Estimator
-from pyml.estimator.base import Tree, Node
+from pyml.base import Estimator
+from pyml.base import Tree, Node
 
 
-class DecisionTreeVR(Estimator, Tree):
+class DecisionTreeVR(Estimator, Tree):  # Variance Reduction
     def __init__(
             self,
             min_samples: int = 2,
