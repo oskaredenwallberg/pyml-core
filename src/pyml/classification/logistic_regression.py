@@ -1,225 +1,155 @@
 import numpy as np
-from typing import Literal
+from numpy.typing import ArrayLike, NDArray
 
-from ..base.linear import LinearModel
-from ..base.linear import lasso, ridge, elastic_net
-from ..utils.math.activations import sigmoid
-from ..utils.metrics.classification import bce_score
+from pyml.base import Estimator, Linear
+from pyml.base import Optimizer
+from pyml.optimization import GradientDescent
+from pyml.config.constants import EPS
 
 
-class LogisiticLASSO(LinearModel):
+class LogisticRegression(Estimator, Linear):
     def __init__(
-            self, 
-            learning_rate = 0.01, 
-            alpha : float = 1,  # regularisation strength
-            epochs = 200,
-            batch_size = 32,
-            keep_rest = False,
-            training_method = 'mbsgd',
-            patience = 5,
-            train_val_split = 0.2,
-            verbose = True):
-        super().__init__(learning_rate, epochs, batch_size, keep_rest, training_method, patience, train_val_split, verbose)
-        self._activation = sigmoid
-        self.alpha = alpha
-        self.n_features = None
-
-    def compute_loss(self, y_true, y_pred) -> float:
-        """
-        ...
-        """
-        penalty = lasso(self.w)  # l1 norm
-        loss = bce_score(y_true, y_pred) + self.alpha * penalty
-        return loss
-
-    def gradient_update(self, x, y_true, y_pred) -> None:
-        """
-        >>> loss(X, y) = -1/m * sum( y * log(h) + (1-y) * log(1-h) ) + alpha * sum(|w|)
-        >>> # LASSO partial differentials
-        >>> d/dw loss(w, b) = 1/m sum( x * [h(x) - y] ) + alpha * sign(w)
-        >>> d/db loss(w, b) = 1/m sum( h(x) - y )
-        """
-        error = y_pred - y_true
-        m = x.shape[0]
-
-        gradient_w = x.T @ error / m + self.alpha * np.sign(self.w)
-        gradient_b = error.mean()
-
-        self.w -= self.learning_rate * gradient_w
-        self.b -= self.learning_rate * gradient_b
-
-
-class LogisticRidge(LinearModel):
-    def __init__(
-            self, 
-            learning_rate = 0.01, 
-            lamda : float = 1,  # regularisation strength
-            epochs = 200,
-            batch_size = 32,
-            keep_rest = False,
-            training_method = 'mbsgd',
-            patience = 5,
-            train_val_split = 0.2,
-            verbose = True):
-        super().__init__(learning_rate, epochs, batch_size, keep_rest, training_method, patience, train_val_split, verbose)
-        self._activation = sigmoid
+            self,
+            lamda: float,
+            optimizer: Optimizer,
+        ):
         self.lamda = lamda
-        self.n_features = None
+        self.optimizer = optimizer
+        self.params: NDArray = None
 
-    def compute_loss(self, y_true, y_pred) -> float:
-        """
-        ...
-        """
-        penalty = ridge(self.w)
-        loss = bce_score(y_true, y_pred) + self.lamda * penalty
+    def fit(self, x: ArrayLike, y: ArrayLike) -> None:
+        x = np.asarray(x).copy()
+        y = np.asarray(y).copy()
+        N, F = x.shape
+        x = np.c_[np.ones(N), x]
+
+        params = np.zeros(F+1)
+        params = self.optimizer.run(self, x, y, params)
+        self.params = params
+
+    def loss(self, x: NDArray, y: NDArray, theta: NDArray) -> float:
+        N = y.size
+        p = sigmoid(x @ theta)
+        loss = -1/N * (y.T @ np.log(p + EPS) + (1-y).T @ np.log(1-p + EPS))
+        loss += self.lamda * np.sum(theta[1:] ** 2)
         return loss
-    
-    def gradient_update(self, x, y_true, y_pred) -> None:
-        """
-        >>> loss(X, y) = -1/m * sum( y * log(h) + (1-y) * log(1-h) ) + lamda * sum(w^2)
-        >>> # Ridge partial differentials
-        >>> d/dw loss(w, b) = 1/m sum( x * [h(x) - y] ) + 2 * lamda * sum(w)
-        >>> d/db loss(w, b) = 1/m sum( h(x) - y )
-        """
-        error = y_pred - y_true
-        m = x.shape[0]
 
-        gradient_w = x.T @ error / m + self.lamda * self.w
-        gradient_b = error.mean()
+    def gradient(self, x: NDArray, y: NDArray, theta: NDArray) -> NDArray:
+        N = y.size
+        p = sigmoid(x @ theta)
+        grad = 1/N * x.T @ ( p - y )
+        grad[1:] += 2 * self.lamda * theta[1:]
+        return grad
 
-        self.w -= self.learning_rate * gradient_w
-        self.b -= self.learning_rate * gradient_b
+    def hessian(self, x: NDArray, y: NDArray, theta: NDArray) -> NDArray:
+        ... # for newton method
 
+    def predict(self, x):
+        return sigmoid(self.linear(x))
 
+    def probability(self, x):
+        return sigmoid(self.linear(x)).round(0)
 
-# class LogisticRegression(LinearModel):
-#     def __init__(
-#             self, 
-#             learning_rate = 0.01, 
-#             epochs = 200, 
-#             batch_size = 32,
-#             keep_rest = False,
-#             training_method = 'mbsgd',
-#             patience = 5,
-#             train_val_split = 0.2,
-#             verbose = True):
-#         super().__init__(learning_rate, epochs, batch_size, keep_rest, training_method, patience, train_val_split, verbose)
-#         self._activation = sigmoid
-#         self.n_features = None
-
-#     def compute_loss(self, y_true, y_pred):
-#         """
-#         Includes no penalty in normal LogisticRegression
-#         """
-#         loss = bce_score(y_true, y_pred)  # binary cross entropy score
-#         return loss
-
-#     def gradient_update(self, x, y_true, y_pred):
-#         """
-#         Includes no regularisation penalty termin in normal LogisticRegression. 
-
-#         >>> loss(X, y) = -1/m * sum( y * log(h(X)) + (1-y) * log(1-h(X)) )  # nll
-#         >>> where, h(x) = 1/(1+e^-(wx+b))
-#         >>> # Logistic Regression partial differentials
-#         >>> d/dw loss(w, b) = 1/m sum( x * [h(x) - y] )
-#         >>> d/db loss(w, b) = 1/m sum( h(x) - y )
-#         """ # NOTE see calculation at bottom of file
-#         error = y_pred - y_true  # h(x) - y 
-#         m = x.shape[0]
-
-#         gradient_w = x.T @ error / m
-#         gradient_b = error.mean()
-
-#         self.w -= self.learning_rate * gradient_w
-#         self.b -= self.learning_rate * gradient_b
+    def prb(self, x):
+        return self.probability(x)
 
 
-# class LogisticElasticNet(LinearModel):
-#     def __init__(
-#             self, 
-#             learning_rate = 0.01,
-#             l1_ratio : float = 0.5, 
-#             alpha : float = 1,  # regularisation strength
-#             epochs = 200,
-#             batch_size = 32,
-#             keep_rest = False,
-#             training_method = 'mbsgd',
-#             patience = 5,
-#             train_val_split = 0.2,
-#             verbose = True):
-#         super().__init__(learning_rate, epochs, batch_size, keep_rest, training_method, patience, train_val_split, verbose)
-#         self._activation = sigmoid
-#         self.alpha = alpha
-#         self.l1_ratio = l1_ratio
-#         self.n_features = None   
-
-#     def compute_loss(self, y_true, y_pred) -> float:
-#         """
-#         ...
-#         """
-#         penalty = elastic_net(self.w)  # weighted sum of l1 norm and l2 norm
-#         loss = bce_score(y_true, y_pred) + self.alpha * penalty
-#         return loss
-    
-#     def gradient_update(self, x, y_true, y_pred) -> None:
-#         """
-#         >>> penalty(w) = l1_ratio * sum(|w|) + (1 - l1_ratio) * sum(w^2)
-#         >>> loss(X, y) = -1/m * sum( y * log(h) + (1-y) * log(1-h) ) + lamda * sum(w^2)
-#         >>> # Ridge partial differentials
-#         >>> d/dw penalty(w) = l1_ratio * sign(w) + (1 - l1_ratio) * 2 * w
-#         >>> d/dw loss(w, b) = 1/m sum( x * [h(x) - y] ) + alpha * d/dw penalty(w)
-#         >>> d/db loss(w, b) = 1/m sum( h(x) - y )
-#         """
-#         m = x.shape[0]
-#         errors = y_pred - y_true
-
-#         gradient_penalty = self.l1_ratio * np.sign(self.w) + (1 - self.l1_ratio) * 2 * self.w
-#         gradient_w = x.T @ errors / m + self.alpha * gradient_penalty
-#         gradient_b = errors.mean()
-
-#         self.w -= self.learning_rate * gradient_w
-#         self.b -= self.learning_rate * gradient_b
+def sigmoid(z: ArrayLike) -> NDArray:
+    return 1 / (1 + np.exp(-z))
 
 
-
-#  Logistic Regression Partial Derivatives 
-#  Calculations w/o penalty term. 
-#  loss (a.k.a. NLL or BCE)
-#  
-#  loss = - sum( y * log(1/(1+e^-(wx+b))) +  (1-y) * log(1 - 1/(1+e^-(wx+b))) )
-#  * { 
-#    log(1 - 1/(1+e^-(wx+b))) =
-#    = log((1+e^-(wx+b))/(1+e^-(wx+b)) - 1/(1+e^-(wx+b)))
-#    = log( e^-(wx+b)/(1+e^-(wx+b)) )
-#  }
-#  loss = - sum( y * log(1/(1+e^-(wx+b))) + (1-y) * (log(e^-(wx+b)) - log((1+e^-(wx+b))) )
-#  loss = - sum( -y*log(1+e^-(wx+b)) + y*(wx+b) + y*log((1+e^-(wx+b))) + -(wx+b) - log((1+e^-(wx+b)) )
-#  loss = - sum(  y*(wx+b) -(wx+b) - log((1+e^-(wx+b)) )
-#  loss = - sum(  (y-1)*(wx+b) - log((1+e^-(wx+b)) )
-#  
-#  d/dw loss = -1/m sum( x * [(y-1) - e^-(wx+b)/(1+e^-(wx+b))] )
-#  d/db loss = -1/m sum( (y-1) - e^-(wx+b)/(1+e^-(wx+b)) )
-#  
-#  h(x) = 1 / (1 + e^-(wx+b))  <==>  e^-(wx+b) = 1/h(x) - 1
-#  ==> e^-(wx+b) * 1/(1+e^-(wx+b)) = (1/h(x) - 1) * h(x) = 1 - h(x)
-#  ==> 1 - y - (1 - h(x)) = h(x) - y
-#  
-#  d/dw loss = 1/m sum( x * [h(x) - y] )
-#  d/db loss = 1/m sum( h(x) - y )
+class LogisticRegressionGD(LogisticRegression):
+    def __init__(
+            self,
+            lamda: float,
+            batch_size: int | None = None,
+            iterations: int = 100,
+            tolerance: float = 1e-4,
+            learning_rate: float = 1e-3,
+        ):
+        optimizer = GradientDescent(
+            batch_size, 
+            iterations, 
+            tolerance, 
+            learning_rate
+        )
+        super().__init__(lamda=lamda, optimizer=optimizer)
 
 
 
 
-# L = p^y * (1-p)^(1-y)
-# 
-# LL = y*log(p) + (1-y)log(1-p)
-# 
-#              m
-# df/db = -1/m*∑((yi-1) + e^-(w*xi+b)/(1+e^-(w*xi+b)))
-#             i=1
-# 
-#              m
-# df/dw = -1/m*∑xi((yi-1) + e^-(w*xi+b)/(1+e^-(w*xi+b)))
-#             i=1
 
-# rewrite the loss function and then take the derivative!
+
+"""
+## Scalar and summation form
+
+likelihood l
+l = prod( p^y*(1-p)^(1-y) )^{1/n}  # Bernoulli likelihood for all examples
+nll = -log l
+nll = -1/n sum( y*log(p) + (1-y)log(1-p) )
+
+p = sigmoid(z) = 1 / (1 + e^{-z})
+z = Xw + b
+
+dz/dw = d/dw Xw + b = X
+dz/db = d/db Xw + b = 1
+
+d/dw nll = d/dp*dp/dz*dz/dw nll
+d/dp nll = -1/n sum( y/p - (1-y)/(1-p) )
+dp/dz 
+ = e^{-z} / (1 + e^{-z})^2 
+ = (1 + e^{-z}) / (1 + e^{-z})^2 - 1/(1 + e^{-z})^2
+ = 1 / (1 + e^{-z}) - 1/(1 + e^{-z})^2
+ = p - p^2
+ = p(1 - p)
+d/dz nll = d/dp*dp/dz nll
+ = -1/n sum( y/p - (1-y)/(1-p) ) * p(1 - p)
+ = -1/n sum( y(1 - p) - (1-y)p )
+ = -1/n sum( y - yp - p + yp )
+ = -1/n sum( y - p )
+ = -1/n sum( y - 1 / (1 + e^{-z}) )
+d/dw nll = d/dz*dz/dw nll
+ = -1/n X^T (y - 1 / (1 + e^{-Xw-b}))
+d/db nll = d/dz*dz/db nll
+ = -1/n 1^T (y - 1 / (1 + e^{-Xw-b}))
+
+ 
+## Vectorized form
+
+p = 1 / (1 + e^{-z})
+J_{p,z} 
+ = diag( e^{-z} / (1 + e^{-z})^2 )
+ = diag( p - p^2 )
+
+J_{z,w} = X
+J_{z,b} = 1  in  R^{n}
+
+nll 
+ = -1/n ( y^T log(p) + (1-y)^T log(1-p) )  in  R
+nabla_p nll
+ = -1/n ( y/p - (1-y)/(1-p) )
+nabla_z nll 
+ = J_{p,z}^T nabla_p nll
+ = diag(p - p^2)^T -1/n ( y/p - (1-y)/(1-p) )
+ = -1/n ( diag(p - p^2)^T y/p - diag(p - p^2)^T (1-y)/(1-p) )
+ = -1/n ( diag(1 - p)^T y - diag(p)^T (1-y) )
+ = -1/n ( y - y*p - p + y*p )
+ = -1/n ( y - p )
+ = -1/n ( y - p )  in  R^{n}
+nabla_w nll 
+ = J_{z,w}^T nabla_z nll
+ = -1/n X^T ( y - p )
+ = 1/n X^T (p - y)
+nabla_b nll
+ = J_{z,b}^T nabla_z nll
+ = -1/n 1^T ( y - p )
+ = 1/n 1^T (p - y)
+
+With l2 penalty:
+nabla_w nll = 1/n X^T (p - y) + 2 lamda w
+nabla_b nll = 1/n 1^T (p - y)
+"""
+
+# multi class classification extension of logistic regression
+class SoftmaxRegressionGD(Estimator, Linear):
+    pass # TODO

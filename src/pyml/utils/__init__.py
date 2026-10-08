@@ -1,1 +1,1 @@
-from pyml.optimizer.base.stopping import EarlyStopper
+from pyml.optimization.base.stopping import EarlyStopper

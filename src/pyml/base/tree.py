@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
+
 class Node:
     def __init__(self,
             depth : int,
@@ -133,8 +134,6 @@ class Tree:
         for node in self.ravel():
             string += "|  "*(node.depth-1) + "|--" + node.__str__() + f"\n"
         return string
-
-
 
 
 

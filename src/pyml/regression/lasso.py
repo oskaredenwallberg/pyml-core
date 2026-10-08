@@ -1,20 +1,20 @@
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from pyml.base import Estimator, Optimizer
-from pyml.base import Linear
+from pyml.base import Estimator, Linear
+from pyml.base import Optimizer
+from pyml.optimization import CoordinateDescent
 
 
-class LassoCD(Estimator, Linear):
+class Lasso(Estimator, Linear):
     def __init__(
             self,
             lamda: float,
-            iterations: int = 100,
-            ):
+            optimizer: Optimizer,
+        ):
         self.lamda = lamda
-        self.optimizer = CoordinateDescent(iterations)
+        self.optimizer = optimizer
         self.params: NDArray = None
-        self.losses: NDArray = None
 
     def fit(self, x: ArrayLike, y: ArrayLike):
         x = np.asarray(x).copy()
@@ -23,9 +23,7 @@ class LassoCD(Estimator, Linear):
         x = np.c_[np.ones(N), x]
 
         params = np.zeros(F+1)
-        losses, params = self.optimizer.run(self, x, y, params)
-
-        self.losses = losses
+        params = self.optimizer.run(self, x, y, params)
         self.params = params
 
     def coordinate(self, x: NDArray, y: NDArray, theta: NDArray, j: int):
@@ -47,6 +45,19 @@ class LassoCD(Estimator, Linear):
     def predict(self, x: ArrayLike) -> NDArray:
         return self.linear(x)
 
+
+class LassoCD(Lasso):
+    def __init__(
+            self,
+            lamda: float,
+            iterations: int = 100,
+        ):
+        optimizer = CoordinateDescent(
+            iterations,
+        )
+        super().__init__(lamda=lamda, optimizer=optimizer)
+
+
 # L(theta) = 1/N * l2(y - X @ theta)^2 + lamda * l1(theta)
 # L(theta) = 1/N * Sum( (y - X @ theta)^2 ) + lamda * Sum( abs(theta[1:]) )
 
@@ -57,30 +68,3 @@ def soft_threshold(a, b):
     if a < -b:
         return a + b
     return 0.0
-
-
-class CoordinateDescent(Optimizer):
-    def __init__(
-            self,
-            iterations: int,
-        ):
-        self.iterations = iterations
-
-    def run(
-            self,
-            estimator: LassoCD,
-            x: NDArray,
-            y: NDArray,
-            params: NDArray,
-        ) -> tuple[NDArray, NDArray]:
-
-        N, F = x.shape
-        losses = np.full((self.iterations,), fill_value=np.nan)
-
-        for i in range(self.iterations):
-            for j in range(F):
-                params[j] = estimator.coordinate(x, y, params, j)
-            loss = estimator.loss(x, y, params)
-            losses[i] = loss
-
-        return losses, params

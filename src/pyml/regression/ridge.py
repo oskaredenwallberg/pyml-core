@@ -1,8 +1,9 @@
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from pyml.base import Estimator, Optimizer
-from pyml.base import Linear
+from pyml.base import Estimator, Linear
+from pyml.base import Optimizer
+from pyml.optimization import GradientDescent
 
 
 class RidgeQR(Estimator, Linear):
@@ -60,18 +61,15 @@ class RidgeCholesky(Estimator, Linear):
         return self.linear(x)
 
 
-class RidgeGD(Estimator, Linear):
+class Ridge(Estimator, Linear):
     def __init__(
             self,
-            lamda: float,  # regularization strength
-            batch_size: int | None = None,
-            iterations: int = 100,
-            learning_rate: float = 1e-3,
+            lamda: float,
+            optimizer: Optimizer,
         ):
         self.lamda = lamda
-        self.optimizer = GradientDescent(batch_size, iterations, learning_rate)
+        self.optimizer = optimizer
         self.params: NDArray = None
-        self.losses: NDArray = None
 
     def fit(self, x: ArrayLike, y: ArrayLike) -> None:
         x = np.asarray(x).copy()
@@ -80,9 +78,7 @@ class RidgeGD(Estimator, Linear):
         x = np.c_[np.ones(N), x]
 
         params = np.zeros(F+1)
-        losses, params = self.optimizer.run(self, x, y, params)
-
-        self.losses = losses
+        params = self.optimizer.run(self, x, y, params)
         self.params = params
 
     def gradient(self, x: NDArray, y: NDArray, theta: NDArray) -> NDArray:
@@ -91,57 +87,28 @@ class RidgeGD(Estimator, Linear):
         grad[1:] += 2 * self.lamda * theta[1:]
         return grad
 
-    def loss(self, x: NDArray, y: NDArray, theta: NDArray) -> NDArray:
+    def loss(self, x: NDArray, y: NDArray, theta: NDArray) -> float:
         loss = np.mean((y - x @ theta) ** 2)
         loss += self.lamda * np.sum(theta[1:] ** 2)
         return loss
 
     def predict(self, x: ArrayLike) -> NDArray:
         return self.linear(x)
+    
 
-
-class GradientDescent(Optimizer):
+class RidgeGD(Ridge):
     def __init__(
             self,
-            batch_size: int | None,
-            iterations: int,
-            learning_rate: float,
+            lamda: float,  # regularization strength
+            batch_size: int | None = None,
+            iterations: int = 100,
+            tolerance: float = 1e-4,
+            learning_rate: float = 1e-3,
         ):
-        self.batch_size = batch_size
-        self.iterations = iterations
-        self.learning_rate = learning_rate
-    
-    def run(
-            self,
-            estimator: Estimator,
-            x: NDArray, 
-            y: NDArray, 
-            params: NDArray,
-        ) -> tuple[NDArray, NDArray]:
-        
-        losses = np.full((self.iterations,), fill_value=np.nan)
-        N, F = x.shape
-        x_batch, y_batch = x, y
-        index = np.arange(N)
-
-        for i in range(self.iterations):
-            if self.batch_size is not None:
-                np.random.shuffle(index)
-                index_batch = index[:self.batch_size]
-                x_batch = x[index_batch]
-                y_batch = y[index_batch]
-            grad = estimator.gradient(x_batch, y_batch, params)
-            params -= self.learning_rate * grad
-            loss = estimator.loss(x_batch, y_batch, params)
-            losses[i] = loss
-
-        return losses, params
-
-# TODO add to GradientDescent
-# patience = 5,
-# train_val_split = 0.2,
-# verbose = True
-
-
-class ConjugateDescent(Optimizer):
-    pass # TODO
+        optimizer = GradientDescent(
+            batch_size, 
+            iterations, 
+            tolerance, 
+            learning_rate,
+        )
+        super().__init__(lamda=lamda, optimizer=optimizer)

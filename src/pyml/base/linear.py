@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
+
 class Linear:
     params: NDArray | None
 
@@ -16,7 +17,7 @@ class Linear:
     def linear(self, x: ArrayLike) -> NDArray:
         assert self.params is not None
         x = np.asarray(x).copy()
-        N = x.shape[0]
+        N, F = x.shape
         x = np.c_[np.ones((N, 1)), x]
 
         return x @ self.params

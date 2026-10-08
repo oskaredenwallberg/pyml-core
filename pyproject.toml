@@ -9,6 +9,7 @@ description = "Machine learning algorithms implemented from scratch."
 requires-python = ">=3.11"
 dependencies = [
     "numpy",
+    "scikit-learn>=1.9.1",
 ]
 
 [project.optional-dependencies]

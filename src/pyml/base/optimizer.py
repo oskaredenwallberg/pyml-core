@@ -3,7 +3,10 @@ from numpy.typing import NDArray
 
 from pyml.base import Estimator
 
+
 class Optimizer:
+    losses: NDArray
+
     def run(
             self,
             estimator: Estimator,
@@ -11,6 +14,9 @@ class Optimizer:
             y: NDArray,
             params: NDArray
         ) -> tuple[NDArray, NDArray]:
+        raise NotImplementedError
+
+    def converged(self) -> bool:
         raise NotImplementedError
 
 

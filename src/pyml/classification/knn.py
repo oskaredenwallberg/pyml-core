@@ -33,18 +33,22 @@ class KNearestVoting(Estimator, Neighbor):
 
         C = self.classes.size
         classindex = self.inverse[index]
-        predictions = np.empty((M,), dtype=self.classes.dtype)
-        
         weights = 1.0 / np.maximum(distance, EPS) if self.weighted == True else None
+        
+        predictions = np.empty((M,), dtype=self.classes.dtype)
 
         for i0 in range(0, M, self.chunksize):
             i1 = i0 + min(self.chunksize, M-i0)
             B = i1 - i0
             
-            r = np.ravel(classindex[i0:i1] + C * np.arange(B)[:,None])
+            c = np.ravel(classindex[i0:i1] + C * np.arange(B)[:,None])
             w = np.ravel(weights[i0:i1]) if weights is not None else None
-            counts = np.bincount(r, weights=w, minlength=B*C).reshape(B, C)
 
+            # sums weights for classes instead of counting if weights are passed
+            counts = np.bincount(c, weights=w, minlength=B*C)
+            counts = counts.reshape(B, C)
+
+            # chooses class with lowest sum of distances if weighted
             predictions[i0:i1] = self.classes[np.argmax(counts, axis=1)]
 
         return predictions

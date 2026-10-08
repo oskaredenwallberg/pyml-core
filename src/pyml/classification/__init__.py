@@ -1,1 +1,2 @@
 from pyml.classification.knn import KNearestVoting
+from pyml.classification.logistic_regression import LogisticRegression, LogisticRegressionGD
