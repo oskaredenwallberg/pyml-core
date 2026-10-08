@@ -54,8 +54,10 @@ class LogisticRegression(Estimator, Linear):
         return self.probability(x)
 
 
-def sigmoid(z: ArrayLike) -> NDArray:
-    return 1 / (1 + np.exp(-z))
+def sigmoid(z: NDArray) -> NDArray:
+    # return 1 / (1 + np.exp(-z))
+    return np.exp(-np.logaddexp(0, -z))
+
 
 
 class LogisticRegressionGD(LogisticRegression):
@@ -63,13 +65,13 @@ class LogisticRegressionGD(LogisticRegression):
             self,
             lamda: float,
             batch_size: int | None = None,
-            iterations: int = 100,
+            iterations_max: int = 100,
             tolerance: float = 1e-4,
             learning_rate: float = 1e-3,
         ):
         optimizer = GradientDescent(
             batch_size, 
-            iterations, 
+            iterations_max, 
             tolerance, 
             learning_rate
         )

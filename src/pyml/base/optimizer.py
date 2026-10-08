@@ -7,17 +7,13 @@ from pyml.base import Estimator
 class Optimizer:
     losses: NDArray
 
-    def run(
-            self,
-            estimator: Estimator,
-            x: NDArray,
-            y: NDArray,
-            params: NDArray
-        ) -> tuple[NDArray, NDArray]:
+    def run(self, estimator: Estimator, x: NDArray, y: NDArray, params: NDArray) -> NDArray:
         raise NotImplementedError
 
-    def converged(self) -> bool:
-        raise NotImplementedError
+    @property
+    def iterations(self) -> int:
+        assert self.losses is not None
+        return np.sum(~np.isnan(self.losses))
 
 
 class EarlyStopper:

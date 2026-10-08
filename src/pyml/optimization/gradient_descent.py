@@ -1,8 +1,8 @@
 import numpy as np
 from numpy.typing import NDArray
 
+# from pyml.base import Estimator
 from pyml.base import Optimizer
-from pyml.base import Estimator
 
 
 # TODO add to GradientDescent
@@ -13,31 +13,24 @@ class GradientDescent(Optimizer):
     def __init__(
             self,
             batch_size: int | None,
-            iterations: int,
+            iterations_max: int,
             tolerance: float,
             learning_rate: float,
         ):
         self.batch_size = batch_size
-        self.iterations = iterations
+        self.iterations_max = iterations_max
         self.tolerance = tolerance
         self.learning_rate = learning_rate
 
         self.losses: NDArray = None
     
-    def run(
-            self,
-            estimator: Estimator,
-            x: NDArray, 
-            y: NDArray, 
-            params: NDArray,
-        ) -> tuple[NDArray, NDArray]:
-        
-        losses = np.full((self.iterations,), fill_value=np.nan)
+    def run(self, estimator, x,  y,  params):
+        losses = np.full((self.iterations_max,), fill_value=np.nan)
         N, F = x.shape
         x_batch, y_batch = x, y
         index = np.arange(N)
 
-        for i in range(self.iterations):
+        for i in range(self.iterations_max):
             if self.batch_size is not None:
                 np.random.shuffle(index)
                 index_batch = index[:self.batch_size]

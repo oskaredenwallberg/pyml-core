@@ -8,9 +8,9 @@ from pyml.base import Estimator
 class CoordinateDescent(Optimizer):
     def __init__(
             self,
-            iterations: int,
+            iterations_max: int,
         ):
-        self.iterations = iterations
+        self.iterations_max = iterations_max
 
     def run(
             self,
@@ -21,9 +21,9 @@ class CoordinateDescent(Optimizer):
         ) -> tuple[NDArray, NDArray]:
 
         N, F = x.shape
-        losses = np.full((self.iterations,), fill_value=np.nan)
+        losses = np.full((self.iterations_max,), fill_value=np.nan)
 
-        for i in range(self.iterations):
+        for i in range(self.iterations_max):
             for j in range(F):
                 params[j] = estimator.coordinate(x, y, params, j)
             loss = estimator.loss(x, y, params)

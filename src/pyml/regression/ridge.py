@@ -101,13 +101,13 @@ class RidgeGD(Ridge):
             self,
             lamda: float,  # regularization strength
             batch_size: int | None = None,
-            iterations: int = 100,
+            iterations_max: int = 100,
             tolerance: float = 1e-4,
             learning_rate: float = 1e-3,
         ):
         optimizer = GradientDescent(
             batch_size, 
-            iterations, 
+            iterations_max, 
             tolerance, 
             learning_rate,
         )

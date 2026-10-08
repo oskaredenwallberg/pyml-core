@@ -50,10 +50,10 @@ class LassoCD(Lasso):
     def __init__(
             self,
             lamda: float,
-            iterations: int = 100,
+            iterations_max: int = 100,
         ):
         optimizer = CoordinateDescent(
-            iterations,
+            iterations_max,
         )
         super().__init__(lamda=lamda, optimizer=optimizer)
 
